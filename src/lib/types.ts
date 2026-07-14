@@ -4,6 +4,7 @@ export interface Supplier {
   location: string;
   region: string;
   contact?: string;
+  website?: string;
   categoryFit: string;
   priceRange: string;
   priceTier: 'low' | 'medium' | 'high';

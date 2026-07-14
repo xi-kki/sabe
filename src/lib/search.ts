@@ -1,38 +1,134 @@
 import { Supplier, SourcingRequest } from './types';
 
 const SERPER_API = 'https://google.serper.dev/search';
+const EXA_API = 'https://api.exa.ai/search';
 
+/**
+ * Search for suppliers using available APIs.
+ * Tries Serper first, falls back to Exa (semantic search), then mock data.
+ */
 export async function searchSuppliers(
   request: SourcingRequest,
-  apiKey: string
+  serperApiKey: string
 ): Promise<Supplier[]> {
   const query = `${request.item} supplier ${request.region} Africa`;
-  
-  try {
-    const response = await fetch(SERPER_API, {
-      method: 'POST',
-      headers: {
-        'X-API-KEY': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        q: query,
-        num: 10,
-        gl: 'ng',
-      }),
-    });
+  const exaApiKey = import.meta.env.VITE_EXA_API_KEY || '';
 
-    if (!response.ok) {
-      console.error('Search API error:', response.status);
-      return getMockSuppliers(request);
+  // Try Serper first (keyword-based, fast)
+  if (serperApiKey) {
+    try {
+      const suppliers = await searchWithSerper(query, serperApiKey, request);
+      if (suppliers.length > 0) return suppliers;
+    } catch (e) {
+      console.warn('Serper search failed, trying Exa:', e);
     }
-
-    const data = await response.json();
-    return parseSearchResults(data, request);
-  } catch (error) {
-    console.error('Search failed:', error);
-    return getMockSuppliers(request);
   }
+
+  // Fallback to Exa (semantic search, better for supplier discovery)
+  if (exaApiKey) {
+    try {
+      const suppliers = await searchWithExa(query, exaApiKey, request);
+      if (suppliers.length > 0) return suppliers;
+    } catch (e) {
+      console.warn('Exa search failed, using mock data:', e);
+    }
+  }
+
+  // Final fallback: mock data
+  return getMockSuppliers(request);
+}
+
+/**
+ * Serper API — fast Google search results
+ */
+async function searchWithSerper(
+  query: string,
+  apiKey: string,
+  request: SourcingRequest
+): Promise<Supplier[]> {
+  const response = await fetch(SERPER_API, {
+    method: 'POST',
+    headers: {
+      'X-API-KEY': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      q: query,
+      num: 10,
+      gl: 'ng',
+    }),
+  });
+
+  if (!response.ok) throw new Error(`Serper error: ${response.status}`);
+
+  const data = await response.json();
+  return parseSearchResults(data, request);
+}
+
+/**
+ * Exa API — semantic/neural search, better for finding relevant suppliers
+ */
+async function searchWithExa(
+  query: string,
+  apiKey: string,
+  request: SourcingRequest
+): Promise<Supplier[]> {
+  const response = await fetch(EXA_API, {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query,
+      numResults: 10,
+      type: 'neural',
+      contents: {
+        text: true,
+      },
+    }),
+  });
+
+  if (!response.ok) throw new Error(`Exa error: ${response.status}`);
+
+  const data = await response.json();
+  return parseExaResults(data, request);
+}
+
+/**
+ * Parse Exa API response into Supplier objects
+ */
+function parseExaResults(data: unknown, request: SourcingRequest): Supplier[] {
+  const results = data as {
+    results?: Array<{
+      title?: string;
+      url?: string;
+      text?: string;
+    }>;
+  };
+  const suppliers: Supplier[] = [];
+
+  if (!results.results) return [];
+
+  for (const result of results.results.slice(0, 5)) {
+    const text = result.text || '';
+    suppliers.push({
+      id: crypto.randomUUID(),
+      name: extractSupplierName(result.title || 'Unknown Supplier'),
+      location: extractLocation(text, request.region),
+      region: request.region,
+      categoryFit: request.item,
+      priceRange: extractPriceRange(text),
+      priceTier: determinePriceTier(text),
+      importDependency: determineImportDependency(text),
+      currencyExposure: determineCurrency(text),
+      riskNotes: extractRiskNotes(text),
+      confidence: determineConfidence(text),
+      website: result.url,
+    });
+  }
+
+  return suppliers;
 }
 
 function parseSearchResults(data: unknown, request: SourcingRequest): Supplier[] {

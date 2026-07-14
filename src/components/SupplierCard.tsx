@@ -19,6 +19,16 @@ export function SupplierCard({ supplier }: SupplierCardProps) {
         <div>
           <h3 className="font-semibold text-gray-900">{supplier.name}</h3>
           <p className="text-sm text-gray-500">{supplier.location}</p>
+          {supplier.website && (
+            <a
+              href={supplier.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+            >
+              🌐 Visit Website ↗
+            </a>
+          )}
         </div>
         <RiskBadge level={risk.level} score={risk.score} />
       </div>
