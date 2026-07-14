@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChatMessage } from '../lib/types';
-import { processSourcingRequest, generateFollowUpResponse } from '../lib/agent';
+import { processSourcingRequest, generateFollowUpResponse, sanitizeInput } from '../lib/agent';
 import { SupplierList } from './SupplierList';
 import { HumanEscalation } from './HumanEscalation';
 
@@ -28,12 +28,13 @@ export function ChatInterface() {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    const trimmed = sanitizeInput(input);
+    if (!trimmed || isLoading) return;
     
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
-      content: input.trim(),
+      content: trimmed,
       timestamp: new Date(),
     };
     
@@ -117,7 +118,7 @@ export function ChatInterface() {
       </header>
       
       {/* Messages */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto" role="log" aria-label="Chat messages" aria-live="polite">
         <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
           {messages.map((message) => (
             <div
@@ -149,12 +150,13 @@ export function ChatInterface() {
           ))}
           
           {isLoading && (
-            <div className="flex justify-start">
+            <div className="flex justify-start" role="status" aria-label="Loading response">
               <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                  <span className="sr-only">Searching for suppliers...</span>
                 </div>
               </div>
             </div>
@@ -170,26 +172,31 @@ export function ChatInterface() {
       )}
       
       {/* Input */}
-      <footer className="bg-white border-t px-4 py-4">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
+      <footer className="bg-white border-t px-4 py-4 safe-bottom">
+        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto" aria-label="Sourcing request form">
           <div className="flex space-x-3">
+            <label htmlFor="sabe-input" className="sr-only">Describe your sourcing need</label>
             <input
+              id="sabe-input"
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Describe your sourcing need..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm min-h-[44px]"
               disabled={isLoading}
+              autoComplete="off"
+              maxLength={500}
             />
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+              className="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium min-h-[44px] min-w-[44px]"
+              aria-label="Search suppliers"
             >
               Search
             </button>
           </div>
-          <p className="mt-2 text-xs text-gray-400 text-center">
+          <p className="mt-2 text-xs text-gray-400 text-center hidden sm:block">
             Try: "I need 500kg of packaging film in Lagos" or "Find garri suppliers in West Africa"
           </p>
         </form>

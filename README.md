@@ -1,42 +1,46 @@
-# Sabe 🌍
+# Sabe — Supplier Intelligence Agent
 
-**Vendor/Supplier Intelligence Agent for African Food-Tech Founders**
+> AI sourcing agent that helps African food-tech founders find and evaluate suppliers in seconds, not weeks.
 
-Sabe helps early-to-growth food-tech founders find and evaluate suppliers in seconds — no procurement team needed.
+## What it does
 
-## What It Does
+- **Natural language sourcing** — describe what you need in plain English
+- **Supplier shortlist** — returns 3-5 vetted suppliers with structured data
+- **Risk scoring** — flags import dependency, FX exposure, and quality concerns
+- **Currency intelligence** — shows local vs USD pricing with hedging suggestions
+- **Human escalation** — hand off to a sourcing expert when needed
+- **Mobile-first** — works great on phones, tablets, and desktop
+- **Accessible** — WCAG-compliant with keyboard nav, screen reader support, and reduced motion
 
-1. **Describe your need** — "I need 500kg of packaging film in Lagos"
-2. **Get supplier shortlist** — 3-5 vetted suppliers with pricing and risk flags
-3. **Follow up naturally** — "Compare the top 2" or "Find local-only options"
-4. **Escalate when needed** — Talk to a human sourcing expert
+## Demo
 
-## Features
-
-- 🎯 **Smart Search** — Understands sourcing intent and finds relevant suppliers
-- 📊 **Risk Scoring** — Flags reliability, FX exposure, and supply chain risks
-- 💱 **Currency Intelligence** — Shows local vs USD pricing implications
-- 🔄 **Conversational Follow-ups** — Refine results naturally
-- 👥 **Human Escalation** — Connect with sourcing experts when needed
+```
+"I need 500kg of packaging film in Lagos"
+→ Returns 3 suppliers with risk scores, currency badges, and hedging tips
+```
 
 ## Tech Stack
 
-- **Frontend:** React + Vite + Tailwind
-- **Agent:** Pi Coding AI Agent
-- **Search:** Serper API (Google results)
-- **Deploy:** Vercel
+| Layer | Tech |
+|-------|------|
+| Frontend | React 18 + Vite + TypeScript |
+| Styling | Tailwind CSS (mobile-first) |
+| Search | Serper API (Google results) |
+| Logic | Intent parsing + risk/currency analysis |
+| Deploy | Vercel / any static host |
 
-## Quick Start
+## Getting Started
 
 ```bash
-# Install dependencies
+# Clone & install
+git clone <repo-url> && cd sabe
 npm install
 
-# Set up environment
+# Environment
 cp .env.example .env
-# Add your Serper API key to .env
+# Add your Serper API key (free tier available at serper.dev)
 
-# Start development
+# Dev server
 npm run dev
 ```
 
@@ -44,42 +48,49 @@ npm run dev
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `VITE_SERPER_API_KEY` | Yes | Serper API key for web search |
+| `VITE_SERPER_API_KEY` | Yes | [Serper.dev](https://serper.dev) API key for search |
 
-Get a free API key at [serper.dev](https://serper.dev)
+> **No API key?** The app falls back to mock supplier data so you can still demo it.
+
+## Usage
+
+Type your sourcing need in natural language:
+
+- "I need 500kg of packaging film in Lagos"
+- "Find garri suppliers in West Africa"
+- "Looking for palm oil bulk suppliers in Nigeria"
+- "Find rice suppliers in Kenya"
+
+Then ask follow-ups:
+- "Compare the top suppliers"
+- "Show me local-only options"
+- "Talk to a human expert"
 
 ## Project Structure
 
 ```
 sabe/
 ├── src/
-│   ├── components/     # UI components
+│   ├── components/         # UI components
 │   │   ├── ChatInterface.tsx
 │   │   ├── SupplierCard.tsx
 │   │   ├── SupplierList.tsx
 │   │   ├── RiskBadge.tsx
 │   │   ├── CurrencyBadge.tsx
 │   │   └── HumanEscalation.tsx
-│   ├── lib/            # Core logic
-│   │   ├── agent.ts    # Agent orchestration
-│   │   ├── search.ts   # Search integration
-│   │   ├── risk.ts     # Risk scoring
-│   │   ├── currency.ts # Currency analysis
-│   │   └── types.ts    # Type definitions
+│   ├── lib/                # Core logic
+│   │   ├── agent.ts        # Intent parsing + orchestration
+│   │   ├── search.ts       # Serper API integration
+│   │   ├── risk.ts         # Risk scoring
+│   │   ├── currency.ts     # Currency exposure analysis
+│   │   └── types.ts        # TypeScript types
 │   ├── App.tsx
-│   ├── main.tsx
-│   └── index.css
+│   └── main.tsx
 ├── .env.example
-├── CLAUDE.md
-└── README.md
+├── CLAUDE.md               # AI context doc
+├── BLUEPRINT.md            # Architecture spec
+└── TODO.md                 # Development phases
 ```
-
-## Non-Goals (v1)
-
-- ❌ Not a marketplace — no transactions
-- ❌ Not compliance checking
-- ❌ No audited guarantees — directional intelligence only
-- ❌ No WhatsApp — web only for now
 
 ## License
 

@@ -5,8 +5,19 @@ import { analyzeCurrencyExposure } from './currency';
 
 const SERPER_API_KEY = import.meta.env.VITE_SERPER_API_KEY || '';
 
+/** Sanitize user input — strip potential XSS and trim */
+export function sanitizeInput(input: string): string {
+  return input
+    .replace(/[<>"'`]/g, '') // Strip HTML/script chars
+    .replace(/javascript:/gi, '') // Strip JS protocol
+    .replace(/on\w+=/gi, '') // Strip event handlers
+    .trim()
+    .slice(0, 500); // Cap at 500 chars
+}
+
 export function parseSourcingRequest(query: string): SourcingRequest {
-  const lower = query.toLowerCase();
+  const sanitized = sanitizeInput(query);
+  const lower = sanitized.toLowerCase();
   
   // Extract item
   let item = '';
@@ -24,7 +35,7 @@ export function parseSourcingRequest(query: string): SourcingRequest {
   }
   
   if (!item) {
-    item = query.split(' ').slice(0, 3).join(' ');
+    item = sanitized.split(' ').slice(0, 3).join(' ');
   }
 
   // Extract quantity
@@ -58,18 +69,19 @@ export function parseSourcingRequest(query: string): SourcingRequest {
   }
 
   return {
-    item,
-    quantity,
+    item: sanitizeInput(item),
+    quantity: sanitizeInput(quantity),
     region,
-    rawQuery: query,
+    rawQuery: sanitized,
   };
 }
 
 export async function processSourcingRequest(
   query: string,
-  history: ChatMessage[]
+  _history: ChatMessage[]
 ): Promise<{ message: string; suppliers: Supplier[] }> {
-  const request = parseSourcingRequest(query);
+  const sanitized = sanitizeInput(query);
+  const request = parseSourcingRequest(sanitized);
   
   // Search for suppliers
   let suppliers = await searchSuppliers(request, SERPER_API_KEY);
