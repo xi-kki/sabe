@@ -4,6 +4,12 @@ import { processSourcingRequest, generateFollowUpResponse, sanitizeInput } from 
 import { SupplierList } from './SupplierList';
 import { HumanEscalation } from './HumanEscalation';
 
+const EXAMPLES = [
+  { tag: 'Packaging', q: 'I need 500kg of packaging film in Lagos' },
+  { tag: 'Staples', q: 'Find garri suppliers in West Africa' },
+  { tag: 'Ingredients', q: 'Cocoa powder bulk suppliers in Ghana' },
+];
+
 export function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -26,9 +32,13 @@ export function ChatInterface() {
     scrollToBottom();
   }, [messages]);
   
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = sanitizeInput(input);
+    send(input);
+  };
+
+  const send = async (raw: string) => {
+    const trimmed = sanitizeInput(raw);
     if (!trimmed || isLoading) return;
     
     const userMessage: ChatMessage = {
@@ -48,7 +58,7 @@ export function ChatInterface() {
       
       if (lastAssistant?.suppliers && lastAssistant.suppliers.length > 0) {
         // Follow-up response
-        const responseText = generateFollowUpResponse(input, lastAssistant.suppliers);
+        const responseText = generateFollowUpResponse(trimmed, lastAssistant.suppliers);
         
         if (responseText.toLowerCase().includes('escalating')) {
           setShowEscalation(true);
@@ -74,7 +84,7 @@ export function ChatInterface() {
         }
       } else {
         // New sourcing request
-        const { message, suppliers } = await processSourcingRequest(input, messages);
+        const { message, suppliers } = await processSourcingRequest(trimmed, messages);
         
         setMessages((prev) => [
           ...prev,
@@ -149,6 +159,22 @@ export function ChatInterface() {
             </div>
           ))}
           
+          {messages.length === 1 && !isLoading && (
+            <div className="grid gap-3 sm:grid-cols-3" aria-label="Example requests">
+              {EXAMPLES.map((ex) => (
+                <button
+                  key={ex.q}
+                  type="button"
+                  onClick={() => send(ex.q)}
+                  className="text-left bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:shadow-sm transition min-h-[44px]"
+                >
+                  <span className="block text-xs font-medium text-blue-600 mb-1">{ex.tag}</span>
+                  <span className="block text-sm text-gray-800">{ex.q}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           {isLoading && (
             <div className="flex justify-start" role="status" aria-label="Loading response">
               <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
